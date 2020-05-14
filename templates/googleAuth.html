@@ -12,9 +12,9 @@
   }
   if (Object.keys(params).length > 0) {
     localStorage.setItem('oauth2-test-params', JSON.stringify(params) );
-    if (params['state'] && params['state'] == 'try_sample_request') {
-      trySampleRequest();
-    }
+    //if (params['state'] && params['state'] == 'try_sample_request') {
+      //trySampleRequest();
+    //}
   }
 
   // If there's an access token, try an API request.
@@ -24,11 +24,42 @@
     if (params && params['access_token']) {
       var xhr = new XMLHttpRequest();
       xhr.open('GET',
-          'https://www.googleapis.com/drive/v2/files?' +
-          'access_token=' + params['access_token']);
+          'https://www.googleapis.com/drive/v3/files?' +
+          'access_token=' + params['access_token']+'&fields=*');
+      //v2 is easier to be used. v3 need to get the response again and again
       xhr.onreadystatechange = function (e) {
         if (xhr.readyState === 4 && xhr.status === 200) {
-          console.log(xhr.response);
+
+
+            var response = xhr.response
+            var originalObject = eval("(" + xhr.response + ")")
+            var originalList = originalObject["files"]
+            var newList = []
+            for(var index in originalList){
+                var a = new Object()
+                var tempObj = originalList[index]
+                a['kind']=tempObj['kind']
+                a['id'] = tempObj['id']
+                a['name'] = tempObj['name']
+                a['size'] = tempObj['size']
+                a['webContentLink'] = tempObj['webContentLink']
+                a['shared'] = tempObj['shared']
+                a['ownedByMe'] = tempObj['ownedByMe']
+                a['createdTime']=tempObj['createdTime']
+                a['mimeType']=tempObj['mimeType']
+                newList.push(a)
+            }
+            var newListJson = JSON.stringify(newList)
+
+
+
+            localStorage.setItem("files",newListJson)
+
+            var stored = localStorage.getItem("files")
+            var storedJson = eval("(" + stored + ")")
+            console.log(storedJson)
+            console.log(eval("(" + xhr.response + ")"))
+
         } else if (xhr.readyState === 4 && xhr.status === 401) {
           // Token invalid, so prompt for user permission.
           oauth2SignIn();
